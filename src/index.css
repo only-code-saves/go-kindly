@@ -1,0 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Josefin Sans", ui-sans-serif, system-ui, sans-serif;
+  
+  --color-primary: #275c42;
+  --color-primary-container: #D0EEDF;
+  --color-on-primary-container: #275c42;
+  
+  --color-secondary: #E1AAB0;
+  --color-secondary-container: #FBEFF5;
+  --color-on-secondary-container: #7d5364;
+  
+  --color-tertiary: #D0EEDF;
+  --color-tertiary-container: #E1AAB0;
+  --color-on-tertiary-container: #5c486a;
+  
+  --color-surface: #FBEFF5;
+  --color-surface-container: #D0EEDF;
+  --color-surface-container-low: #FBEFF5;
+  --color-surface-container-high: #E1AAB0;
+  --color-surface-container-highest: #275c42;
+  
+  --color-on-surface: #2d3335;
+  --color-on-surface-variant: #5a6062;
+  --color-outline: #767c7e;
+  --color-outline-variant: #adb3b5;
+
+  --color-error: #D67A7A;
+  --color-error-container: #FFDAD6;
+  --color-on-error-container: #410002;
+}
+
+@layer base {
+  body {
+    @apply font-sans bg-surface text-on-surface;
+  }
+}
+
+.glass-fab {
+  background: rgba(176, 241, 204, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.animate-pop {
+  animation: pop 0.3s ease-out;
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.02); }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 3s ease-in-out infinite;
+}
