@@ -263,8 +263,7 @@ export const AddTask = ({ onAdd, onCancel, editingTask }: AddTaskProps) => {
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={!title.trim()}
-            className="w-full bg-primary text-white py-5 rounded-2xl font-bold text-lg shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full bg-primary text-white py-5 rounded-2xl font-bold text-lg shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-all"
           >
             <CheckCircle2 className="w-6 h-6" />
             {editingTask ? 'Atualizar Momento' : 'Salvar Momento'}

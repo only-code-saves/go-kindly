@@ -13,22 +13,26 @@ import { INITIAL_TASKS, INITIAL_ACTIVITIES } from './constants';
 export default function App() {
   const [view, setView] = useState<AppView>('home');
   const [tasks, setTasks] = useState<Task[]>(() => {
-    const saved = localStorage.getItem('tasks');
-    return saved ? JSON.parse(saved) : INITIAL_TASKS;
+    try {
+      const saved = localStorage.getItem('tasks');
+      return saved ? JSON.parse(saved) : INITIAL_TASKS;
+    } catch { return INITIAL_TASKS; }
   });
   const [activities, setActivities] = useState<SerendipityActivity[]>(() => {
-    const saved = localStorage.getItem('activities');
-    return saved ? JSON.parse(saved) : INITIAL_ACTIVITIES;
+    try {
+      const saved = localStorage.getItem('activities');
+      return saved ? JSON.parse(saved) : INITIAL_ACTIVITIES;
+    } catch { return INITIAL_ACTIVITIES; }
   });
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   useEffect(() => {
-    localStorage.setItem('tasks', JSON.stringify(tasks));
+    try { localStorage.setItem('tasks', JSON.stringify(tasks)); } catch {}
   }, [tasks]);
 
   useEffect(() => {
-    localStorage.setItem('activities', JSON.stringify(activities));
+    try { localStorage.setItem('activities', JSON.stringify(activities)); } catch {}
   }, [activities]);
 
   const triggerConfetti = () => {
