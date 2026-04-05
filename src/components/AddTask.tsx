@@ -61,8 +61,7 @@ export const AddTask = ({ onAdd, onCancel, editingTask }: AddTaskProps) => {
 
   const handleSubmit = () => {
     if (!title.trim()) return;
-    const totalMinutes = (hours * 60) + minutes;
-    if (totalMinutes <= 0) return;
+    const totalMinutes = Math.max(5, (hours * 60) + minutes);
     
     let finalDeadline = hasDeadline ? deadlineDate : undefined;
     // For backward compatibility and overdue logic, we still append time to deadline if both exist
@@ -162,27 +161,38 @@ export const AddTask = ({ onAdd, onCancel, editingTask }: AddTaskProps) => {
           <div className="flex gap-4">
             <div className="flex-1 space-y-1">
               <label className="text-[10px] font-bold uppercase text-outline px-1">Horas</label>
-              <input 
-                type="number" 
-                min="0"
-                max="23"
-                value={hours}
-                onChange={(e) => setHours(Math.max(0, parseInt(e.target.value) || 0))}
-                className="w-full bg-white border-none rounded-2xl p-4 text-center text-xl font-bold shadow-sm focus:ring-2 focus:ring-primary-container"
-              />
+              <div className="flex items-center bg-white rounded-2xl shadow-sm overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setHours(h => Math.max(0, h - 1))}
+                  className="px-4 py-4 text-xl font-bold text-primary hover:bg-primary-container/20 active:bg-primary-container/40 transition-colors"
+                >−</button>
+                <span className="flex-1 text-center text-xl font-bold text-on-surface">{hours}</span>
+                <button
+                  type="button"
+                  onClick={() => setHours(h => Math.min(23, h + 1))}
+                  className="px-4 py-4 text-xl font-bold text-primary hover:bg-primary-container/20 active:bg-primary-container/40 transition-colors"
+                >+</button>
+              </div>
             </div>
             <div className="flex-1 space-y-1">
               <label className="text-[10px] font-bold uppercase text-outline px-1">Minutos</label>
-              <input 
-                type="number" 
-                min="0"
-                max="59"
-                value={minutes}
-                onChange={(e) => setMinutes(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
-                className="w-full bg-white border-none rounded-2xl p-4 text-center text-xl font-bold shadow-sm focus:ring-2 focus:ring-primary-container"
-              />
+              <div className="flex items-center bg-white rounded-2xl shadow-sm overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setMinutes(m => Math.max(0, m - 5))}
+                  className="px-4 py-4 text-xl font-bold text-primary hover:bg-primary-container/20 active:bg-primary-container/40 transition-colors"
+                >−</button>
+                <span className="flex-1 text-center text-xl font-bold text-on-surface">{minutes}</span>
+                <button
+                  type="button"
+                  onClick={() => setMinutes(m => Math.min(55, m + 5))}
+                  className="px-4 py-4 text-xl font-bold text-primary hover:bg-primary-container/20 active:bg-primary-container/40 transition-colors"
+                >+</button>
+              </div>
             </div>
           </div>
+          <p className="text-[10px] text-outline px-1">Minutos: incrementos de 5 min</p>
         </section>
 
         <section className="space-y-3">
