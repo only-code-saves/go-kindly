@@ -366,7 +366,7 @@ export const Home = ({ tasks, onStartFocus, onViewChange, onDeleteTask, onToggle
             forLaterTasks.map(task => (
               <div 
                 key={task.id} 
-                className={`group p-4 rounded-2xl shadow-sm flex items-center justify-between border-l-4 transition-all hover:translate-x-1 ${activeMenu === task.id ? 'z-30 relative' : 'z-0'} ${task.completed ? 'bg-surface-container-low opacity-60' : task.isOverdue ? 'bg-error-container/10 border-error' : 'bg-white border-primary'}`}
+                className={`group p-4 rounded-2xl shadow-sm flex items-center justify-between border-l-4 transition-all hover:brightness-95 ${activeMenu === task.id ? 'z-30 relative' : 'z-0'} ${task.completed ? 'bg-surface-container-low opacity-60' : task.isOverdue ? 'bg-error-container/10 border-error' : 'bg-white border-primary'}`}
               >
                 <div className="flex items-center gap-4 flex-1">
                   <button 

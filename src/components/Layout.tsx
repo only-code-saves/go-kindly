@@ -25,7 +25,7 @@ export const Layout = ({ children, currentView, onViewChange }: LayoutProps) => 
   };
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col pb-24 md:pb-0">
+    <div className="min-h-screen bg-surface flex flex-col pb-24 md:pb-0 overflow-x-hidden w-full">
       {/* TopAppBar */}
       <header className="sticky top-0 z-50 bg-surface/80 backdrop-blur-xl px-4 py-3 flex justify-between items-center border-b border-surface-container">
         <div className="flex items-center gap-2">
