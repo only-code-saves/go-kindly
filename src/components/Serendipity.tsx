@@ -176,21 +176,28 @@ export const Serendipity = ({ activities, onAddActivity, onRemoveActivity, onSta
         </div>
 
         <div className="flex gap-2 mb-4">
-          <input 
-            type="text" 
+          <input
+            type="text"
             value={newActivity}
             onChange={(e) => setNewActivity(e.target.value)}
-            placeholder="Adicionar nova diversão..."
-            className="flex-1 bg-surface-container-low border-none rounded-2xl px-4 py-3 focus:ring-2 focus:ring-primary-container"
-          />
-          <button 
-            onClick={() => {
-              if (newActivity.trim()) {
-                onAddActivity(newActivity);
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && newActivity.trim()) {
+                onAddActivity(newActivity.trim());
                 setNewActivity('');
               }
             }}
-            className="bg-primary text-white p-3 rounded-2xl"
+            placeholder="Adicionar nova diversão..."
+            className="flex-1 bg-surface-container-low border-none rounded-2xl px-4 py-3 focus:ring-2 focus:ring-primary-container"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              if (newActivity.trim()) {
+                onAddActivity(newActivity.trim());
+                setNewActivity('');
+              }
+            }}
+            className="bg-primary text-white p-3 rounded-2xl active:scale-95 transition-transform"
           >
             <Plus className="w-6 h-6" />
           </button>
@@ -200,7 +207,7 @@ export const Serendipity = ({ activities, onAddActivity, onRemoveActivity, onSta
           {activities.map(activity => {
             const IconComp = ICON_MAP[activity.icon] || Sparkles;
             return (
-              <div key={activity.id} className="bg-surface-container-low p-4 rounded-2xl flex items-center justify-between group hover:bg-surface-container-high transition-colors">
+              <div key={activity.id} className="bg-surface-container-low p-4 rounded-2xl flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-primary-container/40 rounded-xl flex items-center justify-center text-primary">
                     <IconComp className="w-6 h-6" />
@@ -210,9 +217,10 @@ export const Serendipity = ({ activities, onAddActivity, onRemoveActivity, onSta
                     <p className="text-[10px] text-on-surface-variant">Categoria: {activity.category}</p>
                   </div>
                 </div>
-                <button 
+                <button
+                  type="button"
                   onClick={() => onRemoveActivity(activity.id)}
-                  className="opacity-0 group-hover:opacity-100 p-2 text-outline hover:text-red-500 transition-all"
+                  className="p-2 text-outline hover:text-error active:text-error active:scale-95 transition-all"
                 >
                   <Trash2 className="w-5 h-5" />
                 </button>

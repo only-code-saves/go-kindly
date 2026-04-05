@@ -52,17 +52,17 @@ export default function App() {
   };
 
   const handleAddTask = (newTask: Omit<Task, 'id' | 'completed'>) => {
-    if (editingTask) {
-      setTasks(prev => prev.map(t => t.id === editingTask.id ? { ...t, ...newTask } : t));
-      setEditingTask(null);
+    if (editingTask && tasks.some((t: any) => t.id === editingTask.id)) {
+      setTasks((prev: any) => prev.map((t: any) => t.id === editingTask.id ? { ...t, ...newTask } : t));
     } else {
       const task: Task = {
         ...newTask,
-        id: Math.random().toString(36).substr(2, 9),
+        id: Date.now().toString(36),
         completed: false
       };
-      setTasks(prev => [task, ...prev]);
+      setTasks((prev: any) => [task, ...prev]);
     }
+    setEditingTask(null);
     setView('home');
   };
 
@@ -211,14 +211,8 @@ export default function App() {
     }
   };
 
-  const handleViewChange = (newView: AppView) => {
-    // Clear editing state when navigating away from add-task (except via handleEditTask)
-    if (newView !== 'add-task') setEditingTask(null);
-    setView(newView);
-  };
-
   return (
-    <Layout currentView={view} onViewChange={handleViewChange}>
+    <Layout currentView={view} onViewChange={setView}>
       {renderView()}
     </Layout>
   );
