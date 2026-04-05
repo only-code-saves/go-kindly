@@ -211,8 +211,14 @@ export default function App() {
     }
   };
 
+  const handleViewChange = (newView: AppView) => {
+    // Clear editing state when navigating away from add-task (except via handleEditTask)
+    if (newView !== 'add-task') setEditingTask(null);
+    setView(newView);
+  };
+
   return (
-    <Layout currentView={view} onViewChange={setView}>
+    <Layout currentView={view} onViewChange={handleViewChange}>
       {renderView()}
     </Layout>
   );

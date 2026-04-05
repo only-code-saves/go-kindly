@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, CheckCircle2, Info, Wand2, Calendar, Clock, Tag, ChevronDown } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Info, Wand2, Tag } from 'lucide-react';
 import { EnergyLevel, Task, RepetitionType } from '../types';
 import { EnergyIcon } from './EnergyIcon';
 
@@ -12,25 +12,15 @@ interface AddTaskProps {
 export const AddTask = ({ onAdd, onCancel, editingTask }: AddTaskProps) => {
   const [title, setTitle] = useState(editingTask?.title || '');
   const [energyLevel, setEnergyLevel] = useState<EnergyLevel>(editingTask?.energyLevel || 3);
-  const [hours, setHours] = useState(Math.floor((editingTask?.durationMinutes || 30) / 60));
-  const [minutes, setMinutes] = useState((editingTask?.durationMinutes || 30) % 60);
-  const [category, setCategory] = useState(editingTask?.category || 'Trabalho');
-  
+  const [durationMinutes, setDurationMinutes] = useState(editingTask?.durationMinutes || 30);
   const [repetitionType, setRepetitionType] = useState<RepetitionType>(editingTask?.repetition?.type || 'none');
   const [repetitionDays, setRepetitionDays] = useState<number[]>(editingTask?.repetition?.days || []);
   const [hasDeadline, setHasDeadline] = useState(!!editingTask?.deadline);
-  const [deadlineDate, setDeadlineDate] = useState(() => {
-    if (editingTask?.deadline) {
-      return editingTask.deadline.split('T')[0];
-    }
-    return '';
-  });
+  const [deadlineDate, setDeadlineDate] = useState(() => editingTask?.deadline ? editingTask.deadline.split('T')[0] : '');
   const [hasTime, setHasTime] = useState(!!editingTask?.scheduledTime || (!!editingTask?.deadline && editingTask.deadline.includes('T')));
   const [taskTime, setTaskTime] = useState(() => {
     if (editingTask?.scheduledTime) return editingTask.scheduledTime;
-    if (editingTask?.deadline && editingTask.deadline.includes('T')) {
-      return editingTask.deadline.split('T')[1].slice(0, 5);
-    }
+    if (editingTask?.deadline && editingTask.deadline.includes('T')) return editingTask.deadline.split('T')[1].slice(0, 5);
     return '12:00';
   });
   const [observation, setObservation] = useState(editingTask?.observation || '');
@@ -44,39 +34,40 @@ export const AddTask = ({ onAdd, onCancel, editingTask }: AddTaskProps) => {
   };
 
   const daysOfWeek = [
-    { label: 'D', value: 0 },
-    { label: 'S', value: 1 },
-    { label: 'T', value: 2 },
-    { label: 'Q', value: 3 },
-    { label: 'Q', value: 4 },
-    { label: 'S', value: 5 },
-    { label: 'S', value: 6 },
+    { label: 'D', value: 0 }, { label: 'S', value: 1 }, { label: 'T', value: 2 },
+    { label: 'Q', value: 3 }, { label: 'Q', value: 4 }, { label: 'S', value: 5 }, { label: 'S', value: 6 },
   ];
 
   const toggleDay = (day: number) => {
-    setRepetitionDays(prev => 
-      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
-    );
+    setRepetitionDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
+  };
+
+  const changeDuration = (delta: number) => {
+    setDurationMinutes(prev => Math.max(5, Math.min(480, prev + delta)));
+  };
+
+  const formatDuration = (mins: number) => {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    if (h === 0) return `${m} min`;
+    if (m === 0) return `${h}h`;
+    return `${h}h ${m}min`;
   };
 
   const handleSubmit = () => {
     if (!title.trim()) return;
-    const totalMinutes = Math.max(5, (hours * 60) + minutes);
-    
-    let finalDeadline = hasDeadline ? deadlineDate : undefined;
-    // For backward compatibility and overdue logic, we still append time to deadline if both exist
-    if (finalDeadline && hasTime) {
-      finalDeadline = `${deadlineDate}T${taskTime}`;
+
+    let finalDeadline: string | undefined = undefined;
+    if (hasDeadline && deadlineDate) {
+      finalDeadline = hasTime ? `${deadlineDate}T${taskTime}` : deadlineDate;
     }
-    
-    const scheduledDate = hasDeadline ? deadlineDate : (repetitionType === 'today' ? new Date().toISOString() : new Date().toISOString());
 
     onAdd({
-      title,
+      title: title.trim(),
       energyLevel,
-      durationMinutes: totalMinutes,
-      category,
-      scheduledDate,
+      durationMinutes,
+      category: 'Geral',
+      scheduledDate: new Date().toISOString(),
       scheduledTime: hasTime ? taskTime : undefined,
       repetition: repetitionType !== 'none' ? {
         type: repetitionType,
@@ -88,7 +79,7 @@ export const AddTask = ({ onAdd, onCancel, editingTask }: AddTaskProps) => {
   };
 
   return (
-    <div className="space-y-10 animate-in slide-in-from-bottom-8 duration-500 max-w-md mx-auto pb-12">
+    <div className="space-y-8 animate-in slide-in-from-bottom-8 duration-500 max-w-md mx-auto pb-12">
       <header className="flex items-center gap-4">
         <button onClick={onCancel} className="p-2 hover:bg-primary-container/20 rounded-full transition-colors">
           <ArrowLeft className="w-6 h-6 text-primary" />
@@ -96,20 +87,24 @@ export const AddTask = ({ onAdd, onCancel, editingTask }: AddTaskProps) => {
         <h2 className="text-xl font-bold text-primary">{editingTask ? 'Editar Alegria' : 'Nova Alegria'}</h2>
       </header>
 
-      <div className="flex justify-center py-4">
-        <div className="w-32 h-32 bg-primary-container rounded-full flex items-center justify-center relative shadow-inner">
-          <Wand2 className="w-12 h-12 text-primary" />
+      <div className="flex justify-center py-2">
+        <div className="w-24 h-24 bg-primary-container rounded-full flex items-center justify-center relative shadow-inner">
+          <Wand2 className="w-10 h-10 text-primary" />
           <div className="absolute top-2 left-2 animate-bounce text-secondary">
-            <Tag className="w-5 h-5 fill-current" />
+            <Tag className="w-4 h-4 fill-current" />
           </div>
         </div>
       </div>
 
-      <div className="space-y-8">
-        <section className="space-y-3">
-          <label className="block text-lg font-bold tracking-tight text-primary px-1">O que vamos fazer?</label>
-          <input 
-            type="text" 
+      <div className="space-y-6">
+
+        {/* OBRIGATÓRIO: Título */}
+        <section className="space-y-2">
+          <label className="block text-lg font-bold tracking-tight text-primary px-1">
+            O que vamos fazer? <span className="text-error text-sm">*</span>
+          </label>
+          <input
+            type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Ex: Cuidar das plantinhas..."
@@ -117,86 +112,11 @@ export const AddTask = ({ onAdd, onCancel, editingTask }: AddTaskProps) => {
           />
         </section>
 
-        <section className="space-y-3">
-          <label className="block text-lg font-bold tracking-tight text-primary px-1">Observação (Opcional)</label>
-          <textarea 
-            value={observation}
-            onChange={(e) => setObservation(e.target.value.slice(0, 120))}
-            placeholder="Algum detalhe importante?"
-            className="w-full bg-white border-none rounded-2xl p-5 text-sm shadow-sm focus:ring-2 focus:ring-primary-container transition-all min-h-[100px] resize-none"
-          />
-          <div className="flex justify-end px-1">
-            <span className={`text-[10px] font-bold ${observation.length >= 120 ? 'text-error' : 'text-outline'}`}>
-              {observation.length}/120
-            </span>
-          </div>
-        </section>
-
-        <section className="space-y-3">
-          <label className="block text-lg font-bold tracking-tight text-primary px-1">Nível de Energia</label>
-          <div className="flex justify-between items-center bg-tertiary-container/20 p-4 rounded-2xl">
-            {[1, 2, 3, 4, 5].map((level) => (
-              <button 
-                key={level}
-                onClick={() => setEnergyLevel(level as EnergyLevel)}
-                className={`flex flex-col items-center gap-2 transition-all ${energyLevel === level ? 'scale-110' : 'opacity-40'}`}
-              >
-                <div className={`w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm ${energyLevel === level ? 'ring-2 ring-tertiary' : ''}`}>
-                  <EnergyIcon level={level as EnergyLevel} className="text-tertiary" />
-                </div>
-                <span className="text-[10px] font-bold text-tertiary">{level}</span>
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-2 px-3 py-3 bg-surface-container-low rounded-xl min-h-[60px]">
-            <Info className="w-4 h-4 text-tertiary shrink-0" />
-            <p className="text-[11px] text-on-surface-variant font-medium leading-tight">
-              {energyPhrases[energyLevel]}
-            </p>
-          </div>
-        </section>
-
-        <section className="space-y-3">
-          <label className="block text-lg font-bold tracking-tight text-primary px-1">Quanto tempo dura?</label>
-          <div className="flex gap-4">
-            <div className="flex-1 space-y-1">
-              <label className="text-[10px] font-bold uppercase text-outline px-1">Horas</label>
-              <div className="flex items-center bg-white rounded-2xl shadow-sm overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setHours(h => Math.max(0, h - 1))}
-                  className="px-4 py-4 text-xl font-bold text-primary hover:bg-primary-container/20 active:bg-primary-container/40 transition-colors"
-                >−</button>
-                <span className="flex-1 text-center text-xl font-bold text-on-surface">{hours}</span>
-                <button
-                  type="button"
-                  onClick={() => setHours(h => Math.min(23, h + 1))}
-                  className="px-4 py-4 text-xl font-bold text-primary hover:bg-primary-container/20 active:bg-primary-container/40 transition-colors"
-                >+</button>
-              </div>
-            </div>
-            <div className="flex-1 space-y-1">
-              <label className="text-[10px] font-bold uppercase text-outline px-1">Minutos</label>
-              <div className="flex items-center bg-white rounded-2xl shadow-sm overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setMinutes(m => Math.max(0, m - 5))}
-                  className="px-4 py-4 text-xl font-bold text-primary hover:bg-primary-container/20 active:bg-primary-container/40 transition-colors"
-                >−</button>
-                <span className="flex-1 text-center text-xl font-bold text-on-surface">{minutes}</span>
-                <button
-                  type="button"
-                  onClick={() => setMinutes(m => Math.min(55, m + 5))}
-                  className="px-4 py-4 text-xl font-bold text-primary hover:bg-primary-container/20 active:bg-primary-container/40 transition-colors"
-                >+</button>
-              </div>
-            </div>
-          </div>
-          <p className="text-[10px] text-outline px-1">Minutos: incrementos de 5 min</p>
-        </section>
-
-        <section className="space-y-3">
-          <label className="block text-lg font-bold tracking-tight text-primary px-1">Repetições da tarefa</label>
+        {/* OBRIGATÓRIO: Repetição */}
+        <section className="space-y-2">
+          <label className="block text-lg font-bold tracking-tight text-primary px-1">
+            Repetições da tarefa <span className="text-error text-sm">*</span>
+          </label>
           <div className="grid grid-cols-2 gap-3">
             {[
               { label: 'Hoje', value: 'today' },
@@ -213,6 +133,7 @@ export const AddTask = ({ onAdd, onCancel, editingTask }: AddTaskProps) => {
             ].map((opt) => (
               <button
                 key={opt.value}
+                type="button"
                 onClick={() => setRepetitionType(opt.value as RepetitionType)}
                 className={`p-4 rounded-2xl text-sm font-bold border-2 transition-all ${repetitionType === opt.value ? 'bg-primary-container border-primary text-primary' : 'bg-white border-transparent text-on-surface-variant'}`}
               >
@@ -220,12 +141,12 @@ export const AddTask = ({ onAdd, onCancel, editingTask }: AddTaskProps) => {
               </button>
             ))}
           </div>
-          
           {repetitionType === 'weekly' && (
-            <div className="flex justify-between p-2 bg-surface-container-low rounded-2xl animate-in fade-in slide-in-from-top-2">
+            <div className="flex justify-between p-2 bg-surface-container-low rounded-2xl animate-in fade-in">
               {daysOfWeek.map((day) => (
                 <button
                   key={day.value}
+                  type="button"
                   onClick={() => toggleDay(day.value)}
                   className={`w-10 h-10 rounded-full text-xs font-bold transition-all ${repetitionDays.includes(day.value) ? 'bg-primary text-white' : 'text-on-surface-variant hover:bg-white'}`}
                 >
@@ -236,61 +157,120 @@ export const AddTask = ({ onAdd, onCancel, editingTask }: AddTaskProps) => {
           )}
         </section>
 
-        <section className="space-y-3">
-          <div className="flex items-center justify-between px-1">
-            <label className="text-lg font-bold tracking-tight text-primary">Precisa de horário?</label>
-            <button 
-              onClick={() => setHasTime(!hasTime)}
-              className={`w-12 h-6 rounded-full transition-all relative ${hasTime ? 'bg-primary' : 'bg-outline-variant'}`}
-            >
-              <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${hasTime ? 'left-7' : 'left-1'}`}></div>
-            </button>
-          </div>
-          
-          {hasTime && (
-            <div className="animate-in fade-in slide-in-from-top-2">
-              <input 
-                type="time" 
+        <div className="border-t border-surface-container pt-4">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-outline px-1 mb-4">Opcionais</p>
+
+          {/* Duração */}
+          <section className="space-y-2 mb-6">
+            <label className="block text-sm font-bold tracking-tight text-on-surface-variant px-1">Duração</label>
+            <div className="flex items-center justify-between bg-white rounded-2xl shadow-sm px-2">
+              <button type="button" onClick={() => changeDuration(-5)}
+                className="w-12 h-12 flex items-center justify-center text-2xl font-bold text-primary hover:bg-primary-container/20 active:bg-primary-container/40 rounded-xl transition-colors">
+                −
+              </button>
+              <span className="text-lg font-bold text-on-surface">{formatDuration(durationMinutes)}</span>
+              <button type="button" onClick={() => changeDuration(5)}
+                className="w-12 h-12 flex items-center justify-center text-2xl font-bold text-primary hover:bg-primary-container/20 active:bg-primary-container/40 rounded-xl transition-colors">
+                +
+              </button>
+            </div>
+          </section>
+
+          {/* Nível de Energia */}
+          <section className="space-y-2 mb-6">
+            <label className="block text-sm font-bold tracking-tight text-on-surface-variant px-1">Nível de Energia</label>
+            <div className="flex justify-between items-center bg-tertiary-container/20 p-3 rounded-2xl">
+              {[1, 2, 3, 4, 5].map((level) => (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={() => setEnergyLevel(level as EnergyLevel)}
+                  className={`flex flex-col items-center gap-1 transition-all ${energyLevel === level ? 'scale-110' : 'opacity-40'}`}
+                >
+                  <div className={`w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm ${energyLevel === level ? 'ring-2 ring-tertiary' : ''}`}>
+                    <EnergyIcon level={level as EnergyLevel} className="text-tertiary" />
+                  </div>
+                  <span className="text-[10px] font-bold text-tertiary">{level}</span>
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-2 px-3 py-2 bg-surface-container-low rounded-xl">
+              <Info className="w-4 h-4 text-tertiary shrink-0" />
+              <p className="text-[11px] text-on-surface-variant font-medium leading-tight">{energyPhrases[energyLevel]}</p>
+            </div>
+          </section>
+
+          {/* Observação */}
+          <section className="space-y-2 mb-6">
+            <label className="block text-sm font-bold tracking-tight text-on-surface-variant px-1">Observação</label>
+            <textarea
+              value={observation}
+              onChange={(e) => setObservation(e.target.value.slice(0, 120))}
+              placeholder="Algum detalhe importante?"
+              className="w-full bg-white border-none rounded-2xl p-4 text-sm shadow-sm focus:ring-2 focus:ring-primary-container transition-all min-h-[80px] resize-none"
+            />
+            <div className="flex justify-end px-1">
+              <span className={`text-[10px] font-bold ${observation.length >= 120 ? 'text-error' : 'text-outline'}`}>{observation.length}/120</span>
+            </div>
+          </section>
+
+          {/* Horário */}
+          <section className="space-y-2 mb-6">
+            <div className="flex items-center justify-between px-1">
+              <label className="text-sm font-bold tracking-tight text-on-surface-variant">Horário específico</label>
+              <button
+                type="button"
+                onClick={() => setHasTime(!hasTime)}
+                className={`w-12 h-6 rounded-full transition-all relative ${hasTime ? 'bg-primary' : 'bg-outline-variant'}`}
+              >
+                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${hasTime ? 'left-7' : 'left-1'}`} />
+              </button>
+            </div>
+            {hasTime && (
+              <input
+                type="time"
                 value={taskTime}
                 onChange={(e) => setTaskTime(e.target.value)}
-                className="w-full bg-white border-none rounded-2xl p-5 text-lg shadow-sm focus:ring-2 focus:ring-primary-container transition-all"
+                className="w-full bg-white border-none rounded-2xl p-4 text-lg shadow-sm focus:ring-2 focus:ring-primary-container transition-all"
               />
-            </div>
-          )}
-        </section>
+            )}
+          </section>
 
-        <section className="space-y-3">
-          <div className="flex items-center justify-between px-1">
-            <label className="text-lg font-bold tracking-tight text-primary">Tem Deadline?</label>
-            <button 
-              onClick={() => setHasDeadline(!hasDeadline)}
-              className={`w-12 h-6 rounded-full transition-all relative ${hasDeadline ? 'bg-primary' : 'bg-outline-variant'}`}
-            >
-              <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${hasDeadline ? 'left-7' : 'left-1'}`}></div>
-            </button>
-          </div>
-          
-          {hasDeadline && (
-            <div className="animate-in fade-in slide-in-from-top-2">
-              <input 
-                type="date" 
+          {/* Deadline */}
+          <section className="space-y-2 mb-6">
+            <div className="flex items-center justify-between px-1">
+              <label className="text-sm font-bold tracking-tight text-on-surface-variant">Deadline</label>
+              <button
+                type="button"
+                onClick={() => setHasDeadline(!hasDeadline)}
+                className={`w-12 h-6 rounded-full transition-all relative ${hasDeadline ? 'bg-primary' : 'bg-outline-variant'}`}
+              >
+                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${hasDeadline ? 'left-7' : 'left-1'}`} />
+              </button>
+            </div>
+            {hasDeadline && (
+              <input
+                type="date"
                 value={deadlineDate}
                 onChange={(e) => setDeadlineDate(e.target.value)}
-                className="w-full bg-white border-none rounded-2xl p-5 text-lg shadow-sm focus:ring-2 focus:ring-primary-container transition-all"
+                className="w-full bg-white border-none rounded-2xl p-4 text-lg shadow-sm focus:ring-2 focus:ring-primary-container transition-all"
               />
-            </div>
-          )}
-        </section>
+            )}
+          </section>
+        </div>
 
-        <div className="pt-6 space-y-4">
-          <button 
+        <div className="pt-2 space-y-3">
+          <button
+            type="button"
             onClick={handleSubmit}
-            className="w-full bg-primary text-white py-5 rounded-2xl font-bold text-lg shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-all"
+            disabled={!title.trim()}
+            className="w-full bg-primary text-white py-5 rounded-2xl font-bold text-lg shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <CheckCircle2 className="w-6 h-6" />
             {editingTask ? 'Atualizar Momento' : 'Salvar Momento'}
           </button>
-          <button 
+          <button
+            type="button"
             onClick={onCancel}
             className="w-full py-4 text-on-surface-variant font-bold hover:text-primary transition-colors"
           >
