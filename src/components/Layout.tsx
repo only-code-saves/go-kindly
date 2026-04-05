@@ -138,7 +138,7 @@ export const Layout = ({ children, currentView, onViewChange }: LayoutProps) => 
         )}
       </AnimatePresence>
 
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-6">
+      <main className="flex-1 max-w-4xl mx-auto w-full px-4 pt-6 pb-48">
         {children}
       </main>
 
