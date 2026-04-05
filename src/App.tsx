@@ -215,8 +215,13 @@ export default function App() {
     }
   };
 
+  const handleAddNew = () => {
+    setEditingTask(null);
+    setView('add-task');
+  };
+
   return (
-    <Layout currentView={view} onViewChange={setView}>
+    <Layout currentView={view} onViewChange={setView} onAddNew={handleAddNew}>
       {renderView()}
     </Layout>
   );

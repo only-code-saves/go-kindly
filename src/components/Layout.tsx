@@ -7,9 +7,10 @@ interface LayoutProps {
   children: ReactNode;
   currentView: AppView;
   onViewChange: (view: AppView) => void;
+  onAddNew: () => void;
 }
 
-export const Layout = ({ children, currentView, onViewChange }: LayoutProps) => {
+export const Layout = ({ children, currentView, onViewChange, onAddNew }: LayoutProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const menuItems = [
@@ -177,7 +178,7 @@ export const Layout = ({ children, currentView, onViewChange }: LayoutProps) => 
       {/* FAB for adding tasks */}
       {currentView !== 'add-task' && currentView !== 'focus' && (
         <button 
-          onClick={() => onViewChange('add-task')}
+          onClick={onAddNew}
           className="fixed right-6 bottom-28 md:bottom-8 w-14 h-14 rounded-full bg-primary text-white shadow-lg flex items-center justify-center hover:scale-110 transition-transform z-40"
         >
           <PlusCircle className="w-8 h-8" />
