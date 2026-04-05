@@ -1,6 +1,6 @@
 export type EnergyLevel = 1 | 2 | 3 | 4 | 5;
 
-export type RepetitionType = 'none' | 'today' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'bimonthly' | 'trimonthly' | 'quarterly' | 'semiannual' | 'annual';
+export type RepetitionType = 'none' | 'today' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'bimonthly' | 'trimonthly' | 'quarterly' | 'semiannual';
 
 export interface Task {
   id: string;
@@ -9,15 +9,15 @@ export interface Task {
   durationMinutes: number;
   category: string;
   completed: boolean;
-  scheduledDate: string; // ISO string
+  scheduledDate: string; // ISO string — date task was created / start date
   scheduledTime?: string; // HH:mm
   repetition?: {
     type: RepetitionType;
-    days?: number[]; // 0-6 for Sunday-Saturday
+    days?: number[]; // 0-6 for Sunday-Saturday (used with 'weekly')
   };
-  deadline?: string; // ISO string
-  deletedInstances?: string[]; // Array of ISO date strings (YYYY-MM-DD)
-  completedDate?: string; // ISO string
+  deadline?: string; // YYYY-MM-DD or YYYY-MM-DDTHH:mm — end date for repeating tasks
+  deletedInstances?: string[]; // toDateString() values of deleted occurrences
+  completedDate?: string;
   isOverdue?: boolean;
   observation?: string;
 }

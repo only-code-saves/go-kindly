@@ -63,52 +63,28 @@ export const Home = ({ tasks, onStartFocus, onViewChange, onDeleteTask, onToggle
     };
   }, [tasks]);
 
-  // Scheduled tasks are those that have a deadline, specific days, or daily repetition
-  const isScheduled = (task: Task) => {
-    return !!task.deadline || (!!task.repetition && (task.repetition.type !== 'none' || !!task.repetition.days));
-  };
+  // A task is scheduled if it has a repetition type other than 'none'
+  const isScheduled = (task: Task) =>
+    !!task.repetition && task.repetition.type !== 'none';
 
   const scheduledTasks = useMemo(() => {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-    
-    // Get instances for today to filter only tasks that should appear today
-    const todayInstances = getTaskInstancesInRange(tasks, today, todayEnd);
-    const todayTaskIds = new Set(todayInstances.map(i => i.task.id));
-
-    return tasks
-      .filter(t => isScheduled(t) && todayTaskIds.has(t.id))
-      .map(t => {
-        if (t.deadline && !t.completed) {
-          const dDate = parseLocalDate(t.deadline);
-          dDate.setHours(0, 0, 0, 0);
-          if (dDate < today) return { ...t, isOverdue: true };
-        }
-        return t;
-      })
-      .sort((a, b) => {
-        if (a.isOverdue && !b.isOverdue) return -1;
-        if (!a.isOverdue && b.isOverdue) return 1;
-        return 0;
-      });
-  }, [tasks]);
-
-  const forLaterTasks = useMemo(() => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    return tasks
-      .filter(t => !isScheduled(t))
-      .map(t => {
-        if (t.deadline && !t.completed) {
-          const dDate = parseLocalDate(t.deadline);
-          dDate.setHours(0, 0, 0, 0);
-          if (dDate < today) return { ...t, isOverdue: true };
-        }
-        return t;
-      });
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const todayEnd   = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+
+    return getTaskInstancesInRange(tasks, todayStart, todayEnd)
+      .map(({ task }) => {
+        const isOverdue = !task.completed && !!task.deadline &&
+          parseLocalDate(task.deadline) < todayStart;
+        return { ...task, isOverdue };
+      })
+      .sort((a, b) => (a.isOverdue === b.isOverdue ? 0 : a.isOverdue ? -1 : 1));
   }, [tasks]);
+
+  // 'Para depois' = tasks with no repetition ('none')
+  const forLaterTasks = useMemo(() =>
+    tasks.filter(t => !isScheduled(t)),
+  [tasks]);
   
   const nextTask = scheduledTasks.find(t => !t.completed);
 

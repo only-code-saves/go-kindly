@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock, CheckCircle2, Edit2, Trash2, MoreVertical, Play } from 'lucide-react';
 import { Task, EnergyLevel } from '../types';
 import { EnergyIcon } from './EnergyIcon';
-import { parseLocalDate } from '../lib/taskUtils';
+import { parseLocalDate, getTaskInstancesInRange, energyWeight } from '../lib/taskUtils';
 
 interface AgendaProps {
   tasks: Task[];
@@ -20,10 +20,7 @@ export const Agenda = ({ tasks, onToggleTask, onEditTask, onDeleteTask, onStartF
 
   const days = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
   
-  // Helper to check if a task is "complex"
-  const isComplex = (energy: EnergyLevel) => energy >= 4;
-
-  // Task Scheduler Logic
+  // Task Scheduler Logic — single source of truth via getTaskInstancesInRange
   const scheduledTasks = useMemo(() => {
     const start = new Date(viewDate);
     if (view === 'weekly') {
@@ -35,178 +32,29 @@ export const Agenda = ({ tasks, onToggleTask, onEditTask, onDeleteTask, onStartF
 
     const end = new Date(start);
     if (view === 'weekly') {
-      end.setDate(start.getDate() + 7);
+      end.setDate(start.getDate() + 6);
     } else {
       end.setMonth(start.getMonth() + 1);
+      end.setDate(0); // last day of month
     }
+    end.setHours(23, 59, 59, 999);
 
+    // Pre-fill schedule with empty arrays for every day in range
     const schedule: Record<string, Task[]> = {};
-    const daysInRange: Date[] = [];
     let curr = new Date(start);
-    while (curr < end) {
-      daysInRange.push(new Date(curr));
+    while (curr <= end) {
       schedule[curr.toDateString()] = [];
       curr.setDate(curr.getDate() + 1);
     }
 
-    // 1. Place Fixed Tasks (Daily, Specific Days, Deadlines, Scheduled)
-    const flexibleTasks: Task[] = [];
+    const today = new Date(); today.setHours(0, 0, 0, 0);
 
-    tasks.forEach(task => {
-      const isFlexible = !task.deadline && (!task.repetition || (task.repetition.type === 'none' && !task.repetition.days));
-      
-      if (isFlexible) {
-        // Flexible tasks with type 'none' are now handled in the "Para depois" section on Home
-        // and are NOT scheduled in the Agenda.
-        return;
-      }
-
-      daysInRange.forEach(date => {
-        let shouldInclude = false;
-        let isOverdue = false;
-        const dateStr = date.toDateString();
-
-        // Check Scheduled Date
-        if (task.scheduledDate && !task.deadline) {
-          const sDate = parseLocalDate(task.scheduledDate);
-          if (sDate.toDateString() === dateStr) shouldInclude = true;
-        }
-
-        // Check Deadline
-        if (task.deadline) {
-          const dDate = parseLocalDate(task.deadline);
-          if (dDate.toDateString() === dateStr) shouldInclude = true;
-
-          // Overdue Logic: If task has a deadline, is not completed, and the deadline is in the past
-          // We show it on the current day (today)
-          if (!task.completed) {
-            const deadlineDate = parseLocalDate(task.deadline);
-            deadlineDate.setHours(0, 0, 0, 0);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const targetDate = new Date(date);
-            targetDate.setHours(0, 0, 0, 0);
-
-            if (deadlineDate < today && targetDate.getTime() === today.getTime()) {
-              shouldInclude = true;
-              isOverdue = true;
-            }
-          }
-        }
-
-        // Check Repetition
-        if (task.repetition) {
-          const taskStartDate = parseLocalDate(task.scheduledDate);
-          taskStartDate.setHours(0, 0, 0, 0);
-          const currentDayDate = new Date(date);
-          currentDayDate.setHours(0, 0, 0, 0);
-
-          // Only repeat if the current day is after or equal to the start date
-          if (currentDayDate >= taskStartDate) {
-            const diffTime = Math.abs(currentDayDate.getTime() - taskStartDate.getTime());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            switch (task.repetition.type) {
-              case 'today':
-                if (taskStartDate.toDateString() === dateStr) shouldInclude = true;
-                break;
-              case 'daily':
-                shouldInclude = true;
-                break;
-              case 'weekly':
-                if (task.repetition.days && task.repetition.days.includes(date.getDay())) {
-                  shouldInclude = true;
-                } else if (!task.repetition.days && date.getDay() === taskStartDate.getDay()) {
-                  // Fallback to the same day of week if no specific days selected
-                  shouldInclude = true;
-                }
-                break;
-              case 'biweekly':
-                if (diffDays % 14 === 0) shouldInclude = true;
-                break;
-              case 'monthly':
-                if (currentDayDate.getDate() === taskStartDate.getDate()) shouldInclude = true;
-                break;
-              case 'bimonthly':
-                // Check if it's the same day of month and every 2 months
-                if (currentDayDate.getDate() === taskStartDate.getDate()) {
-                  const monthDiff = (currentDayDate.getFullYear() - taskStartDate.getFullYear()) * 12 + (currentDayDate.getMonth() - taskStartDate.getMonth());
-                  if (monthDiff % 2 === 0) shouldInclude = true;
-                }
-                break;
-              case 'trimonthly':
-              case 'quarterly':
-                if (currentDayDate.getDate() === taskStartDate.getDate()) {
-                  const monthDiff = (currentDayDate.getFullYear() - taskStartDate.getFullYear()) * 12 + (currentDayDate.getMonth() - taskStartDate.getMonth());
-                  if (monthDiff % 3 === 0) shouldInclude = true;
-                }
-                break;
-              case 'semiannual':
-                if (currentDayDate.getDate() === taskStartDate.getDate()) {
-                  const monthDiff = (currentDayDate.getFullYear() - taskStartDate.getFullYear()) * 12 + (currentDayDate.getMonth() - taskStartDate.getMonth());
-                  if (monthDiff % 6 === 0) shouldInclude = true;
-                }
-                break;
-              case 'annual':
-                if (currentDayDate.getDate() === taskStartDate.getDate() && currentDayDate.getMonth() === taskStartDate.getMonth()) {
-                  shouldInclude = true;
-                }
-                break;
-            }
-          }
-        }
-
-        if (shouldInclude) {
-          // Check if this instance was deleted
-          if (!task.deletedInstances?.includes(dateStr)) {
-            schedule[dateStr].push({ ...task, isOverdue });
-          }
-        }
-      });
-    });
-
-    // 2. Place Flexible Tasks with Energy Balancing
-    // Sort flexible tasks: Complex first
-    const sortedFlexible = [...flexibleTasks].sort((a, b) => b.energyLevel - a.energyLevel);
-
-    sortedFlexible.forEach(task => {
-      // For simplicity, we place flexible tasks once per period (week or month)
-      // In a real app, this would be more sophisticated
-      
-      // Find the "best" day in the current range
-      let bestDateStr = daysInRange[0].toDateString();
-      let minComplexCount = Infinity;
-      let minTotalEnergy = Infinity;
-
-      daysInRange.forEach(date => {
-        const dateStr = date.toDateString();
-        
-        // Check if this instance was deleted
-        if (task.deletedInstances?.includes(dateStr)) return;
-
-        const dayTasks = schedule[dateStr];
-        const complexCount = dayTasks.filter(t => isComplex(t.energyLevel)).length;
-        const totalEnergy = dayTasks.reduce((sum, t) => sum + t.energyLevel, 0);
-
-        if (complexCount < minComplexCount) {
-          minComplexCount = complexCount;
-          minTotalEnergy = totalEnergy;
-          bestDateStr = dateStr;
-        } else if (complexCount === minComplexCount && totalEnergy < minTotalEnergy) {
-          minTotalEnergy = totalEnergy;
-          bestDateStr = dateStr;
-        }
-      });
-
-      // Apply "Maximum 1 complex task per day" rule for flexible tasks
-      if (isComplex(task.energyLevel) && minComplexCount >= 1) {
-        // If we already have a complex task on every day, we still have to place it somewhere
-        // but we'll stick to the best one found.
-      }
-
-      if (!task.deletedInstances?.includes(bestDateStr)) {
-        schedule[bestDateStr].push(task);
-      }
+    getTaskInstancesInRange(tasks, start, end).forEach(({ task, date }) => {
+      const dateStr = date.toDateString();
+      if (schedule[dateStr] === undefined) return;
+      const isOverdue = !task.completed && !!task.deadline &&
+        parseLocalDate(task.deadline) < today;
+      schedule[dateStr].push({ ...task, isOverdue });
     });
 
     return schedule;
@@ -420,8 +268,8 @@ export const Agenda = ({ tasks, onToggleTask, onEditTask, onDeleteTask, onStartF
         <div className="flex items-end gap-1.5 h-16 overflow-x-auto no-scrollbar">
           {flowDays.map((date, i) => {
             const dayTasks = scheduledTasks[date.toDateString()] || [];
-            const totalEnergy = dayTasks.reduce((sum, t) => sum + t.energyLevel, 0);
-            const maxPossibleEnergy = 15; // Arbitrary max for scaling
+            const totalEnergy = dayTasks.reduce((sum: number, t: Task) => sum + energyWeight(t.energyLevel), 0);
+            const maxPossibleEnergy = 25; // scaled for weighted energy
             const height = Math.min(100, (totalEnergy / maxPossibleEnergy) * 100);
             const isSelected = date.toDateString() === selectedDate.toDateString();
             

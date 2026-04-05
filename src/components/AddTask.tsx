@@ -112,6 +112,32 @@ export const AddTask = ({ onAdd, onCancel, editingTask }: AddTaskProps) => {
           />
         </section>
 
+        {/* OBRIGATÓRIO: Nível de Energia */}
+        <section className="space-y-2">
+          <label className="block text-lg font-bold tracking-tight text-primary px-1">
+            Nível de Energia <span className="text-error text-sm">*</span>
+          </label>
+          <div className="flex justify-between items-center bg-tertiary-container/20 p-3 rounded-2xl">
+            {[1, 2, 3, 4, 5].map((level) => (
+              <button
+                key={level}
+                type="button"
+                onClick={() => setEnergyLevel(level as EnergyLevel)}
+                className={`flex flex-col items-center gap-1 transition-all ${energyLevel === level ? 'scale-110' : 'opacity-40'}`}
+              >
+                <div className={`w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm ${energyLevel === level ? 'ring-2 ring-tertiary' : ''}`}>
+                  <EnergyIcon level={level as EnergyLevel} className="text-tertiary" />
+                </div>
+                <span className="text-[10px] font-bold text-tertiary">{level}</span>
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 px-3 py-2 bg-surface-container-low rounded-xl">
+            <Info className="w-4 h-4 text-tertiary shrink-0" />
+            <p className="text-[11px] text-on-surface-variant font-medium leading-tight">{energyPhrases[energyLevel]}</p>
+          </div>
+        </section>
+
         {/* OBRIGATÓRIO: Repetição */}
         <section className="space-y-2">
           <label className="block text-lg font-bold tracking-tight text-primary px-1">
@@ -129,7 +155,6 @@ export const AddTask = ({ onAdd, onCancel, editingTask }: AddTaskProps) => {
               { label: 'Trimestral', value: 'trimonthly' },
               { label: 'Quadrimestral', value: 'quarterly' },
               { label: 'Semestral', value: 'semiannual' },
-              { label: 'Anual', value: 'annual' },
             ].map((opt) => (
               <button
                 key={opt.value}
@@ -173,30 +198,6 @@ export const AddTask = ({ onAdd, onCancel, editingTask }: AddTaskProps) => {
                 className="w-12 h-12 flex items-center justify-center text-2xl font-bold text-primary hover:bg-primary-container/20 active:bg-primary-container/40 rounded-xl transition-colors">
                 +
               </button>
-            </div>
-          </section>
-
-          {/* Nível de Energia */}
-          <section className="space-y-2 mb-6">
-            <label className="block text-sm font-bold tracking-tight text-on-surface-variant px-1">Nível de Energia</label>
-            <div className="flex justify-between items-center bg-tertiary-container/20 p-3 rounded-2xl">
-              {[1, 2, 3, 4, 5].map((level) => (
-                <button
-                  key={level}
-                  type="button"
-                  onClick={() => setEnergyLevel(level as EnergyLevel)}
-                  className={`flex flex-col items-center gap-1 transition-all ${energyLevel === level ? 'scale-110' : 'opacity-40'}`}
-                >
-                  <div className={`w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm ${energyLevel === level ? 'ring-2 ring-tertiary' : ''}`}>
-                    <EnergyIcon level={level as EnergyLevel} className="text-tertiary" />
-                  </div>
-                  <span className="text-[10px] font-bold text-tertiary">{level}</span>
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center gap-2 px-3 py-2 bg-surface-container-low rounded-xl">
-              <Info className="w-4 h-4 text-tertiary shrink-0" />
-              <p className="text-[11px] text-on-surface-variant font-medium leading-tight">{energyPhrases[energyLevel]}</p>
             </div>
           </section>
 
